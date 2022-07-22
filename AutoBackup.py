@@ -1,4 +1,4 @@
-﻿from importlib.resources import path
+from importlib.resources import path
 import sys
 import time
 import os
@@ -40,6 +40,12 @@ final = 0
 
 while final == 0:
     local = input ('---- TRANSFERENCIA ENTRE MAQUINAS ----\n1.PRINCIPAL PARA LOCAL\n2.TRANSFERENCIA VIA REDE(APENAS MIDIAS E MYSQL)\n3.Sair\n')
+    verifica_pasta = os.path.exists('C:\Pulsar\script_pulsar')
+    if verifica_pasta == False:
+        print("Nao foi possivel encontrar a pasta script_pulsar!\nCrie a pasta para que o script funcione corretamente")
+        print("Finalizando!")
+        sleep(4)
+        exit()
     if local == '2':
       hp = input('HOSTNAME PRINCIPAL: ')
       hr = input('HOSTNAME RESERVA: ')
@@ -81,7 +87,7 @@ while final == 0:
       print('\n--------------------------------------------------------\n')
 
       print('echo --- GERANDO TRANSFERENCIA MYSQL ---\n')
-      bd = ('\nxcopy \\\\' + hp + '\mysql\data\\*.* "' + hr + '\mysql\data\\ /s /y /c /k /d"')
+      bd = ('\nnet stop mysql\nxcopy \\\\' + hp + '\mysql\data\\*.* C:\mysql\data\\ /s /y /c /k /d\nnet start mysql\n')
 
       sleep(2)
       
@@ -96,10 +102,20 @@ while final == 0:
       finalizar = input('Finalizar programa ?\n1. Finalizar\n2. Reiniciar\n')
       if finalizar == '1':
         final = 1
+        sys.stdout = open("C:\Pulsar\script_pulsar\BACKUP_PULSAR.bat", "w")
+        print(comercial,
+        jornal,
+        musica,
+        vinheta,
+        horacerta,
+        informativo,
+        gravados,
+        bd)
       if finalizar == '2':
         print('Aguarde!\n')
         sleep(2)
         continue
+
 
     if local == '1':
       hp = input('HOSTNAME PRINCIPAL: ')
@@ -157,9 +173,10 @@ while final == 0:
       print('\necho --- GERANDO ARQUIVO DE BACKUP SQL ---\n')
       pasw = input('SENHA DO BANCO DE DADOS PADRÃO ?\n1.PADRÃO\n2.OUTRA\n')
       if pasw == "1":
-        print('\n--------------------------------------------------------\n')
-        instancia_sql = input ("NUMERO DA INSTANCIA DO BANCO DE DADOS SQL: ")
-        bkp_pasta = input ("DIGITE O NOME DA PASTA DE BACKUP (IDENTICA NAS DUAS MAQUINAS): ")
+        print('--------------------------------------------------------\n')
+        instancia_sql = input ("---------------INFORME A INSTANCIA DO SQL---------------\nExemplo: 0001\nDigite aqui: ")
+        cod_station = input ("\n---------------INFORME O COD_STATION---------------\nExemplo: 1\nDigite aqui: ")
+        bkp_pasta = input ("\nINFORME O NOME DA PASTA ONDE SERA GERADO O BACKUP\nOBSERVACAO: APENAS O NOME DA PASTA E COM A MESMA NOMENCLATURA NAS DUAS MAQUINAS (PRINCIPAL E RESERVA)\nDigite aqui: ")
         print('\n--------------------------------------------------------\n')
         sql_arqv = ('\nsqlcmd -S ' + hp + '\PULSARSQL -U sa -P pulsar -Q "BACKUP DATABASE [Pulsar Multimedia ('+instancia_sql+')] TO DISK='+ '\'' +'C:\Pulsar\\' + bkp_pasta + '\BASE_PADRAO.bak' + '\''  + 'WITH INIT"')
         print('\necho --- GERANDO COMANDO DE BACKUP SQL PADRAO ---\n')
@@ -183,14 +200,14 @@ while final == 0:
 
         print('echo --- GERANDO ARQUIVO PARA RESTAURAR SQL ---\n')
         print('Qual a versão SQL que está sendo utilizada ?\n')
-        versao_sql = input ('Versão SQL utilizada: 14 - 12 - 8\nDigite a versão do SQL: ')
+        versao_sql = input ('Versão SQL utilizada: 14 - 12\nDigite a versão do SQL: ')
         print("----------------------------------LOGIN (TRAFFIC)----------------------------------")
         login_sql = input ("\nLOGIN DO USUÁRIO PADRAO (SUPORTE): ")
         senha_sql = input ("\nSENHA DO USUÁRIO PADRAO (1 AO 6): ")
         print('\n---------------------------------------------------------------------------------\n')
-        r2_vinheta = input ("Informe o endereço via rede das vinhetas (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\VINHETAS\nDigite o caminho: ")
-        r2_jorn = input ("\nInforme o endereço via rede do jornal (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\JORNAL\nDigite o caminho: ")
-        r2_com = input ("\nInforme o endereço via rede dos comerciais (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\COMERCIAL\nDigite o caminho: ")
+        r2_vinheta = input ("Informe o endereço via rede das vinhetas (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\VINHETAS\nDigite o caminho: ")
+        r2_jorn = input ("\nInforme o endereço via rede do jornal (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\JORNAL\nDigite o caminho: ")
+        r2_com = input ("\nInforme o endereço via rede dos comerciais (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\COMERCIAL\nDigite o caminho: ")
         print('\n--------------------------------------------------------\n')
         linha_1 = ('USE master\n')
         linha_2 = ('\nALTER DATABASE [Pulsar Multimedia ('+instancia_sql+')] SET SINGLE_USER WITH ROLLBACK IMMEDIATE\n')
@@ -207,7 +224,7 @@ while final == 0:
         linha_13 = ('\nDirectory_7=\''+r2_vinheta+'\\\',\n')
         linha_14 = ('\nDirectory_8=\''+r2_jorn+'\\\',\n')
         linha_15 = ('\nDirectory_14=\''+r2_com+'\\\',\n')
-        linha_16 = ('\nEnable_Use_Setup_Traffic = 1 WHERE Cod_Station = \'1\';')
+        linha_16 = ('\nEnable_Use_Setup_Traffic = 1 WHERE Cod_Station = \''+ cod_station + '\';')
         
         items = list(range(0, 25))
 
@@ -219,17 +236,38 @@ while final == 0:
 
         finalizar = input('Finalizar programa ?\n1. Finalizar\n2. Reiniciar\n')
         if finalizar == '1':
-            final = 1
+            verifica_pasta = os.path.exists('C:\Pulsar\script_pulsar')
+            if verifica_pasta == True:
+                sys.stdout = open("C:\Pulsar\script_pulsar\BACKUP_PULSAR.bat", "w")
+                print(comercial,
+                jornal,
+                musica,
+                vinheta,
+                horacerta,
+                informativo,
+                gravados,
+                bd,
+                sql_arqv,
+                sql2_arqv,
+                sql_copy,
+                sql_dell,
+                forfile,
+                restore)
+    
+                sys.stdout = open("C:\Pulsar\script_pulsar\RESTORE-PULSAR.sql", "w")
+                print(linha_1, linha_2, linha_3,linha_4, linha_5, linha_6, linha_7, linha_8, linha_9, linha_10, linha_11, linha_12, linha_13, linha_14, linha_15, linha_16)
+                final = 1
         if finalizar == '2':
             print('Aguarde!')
             sleep(2)
             continue
 
       if pasw == "2":
-        print('\n--------------------------------------------------------\n')
+        print('--------------------------------------------------------\n')
         snh = input('DIGITE A SENHA: ')
-        instancia_sql = input ("NUMERO DA INSTANCIA DO BANCO DE DADOS SQL: ")
-        bkp_pasta = input ("DIGITE O NOME DA PASTA DE BACKUP (IDENTICA NAS DUAS MAQUINAS): ")
+        instancia_sql = input ("\n---------------INFORME A INSTANCIA DO SQL---------------\nExemplo: 0001\nDigite aqui: ")
+        cod_station = input ("\n---------------INFORME O COD_STATION---------------\nExemplo: 1\nDigite aqui: ")
+        bkp_pasta = input ("\nINFORME O NOME DA PASTA ONDE SERA GERADO O BACKUP\nOBSERVACAO: APENAS O NOME DA PASTA E COM A MESMA NOMENCLATURA NAS DUAS MAQUINAS (PRINCIPAL E RESERVA)\nDigite aqui: ")
         sql_arqv = ('\nsqlcmd -S ' + hp + '\PULSARSQL -U sa -P '+ snh +' -Q "BACKUP DATABASE [Pulsar Multimedia ('+instancia_sql+')] TO DISK='+ '\'' +'C:\Pulsar\\' + bkp_pasta + '\BASE_PADRAO.bak'+ '\'' +' WITH INIT"')
         print('\necho --- GERANDO ARQUIVO DE BKP SQL COMUM ---\n')
         sql2_arqv = ('\nsqlcmd -S '+ hp +'\PULSARSQL -U sa -P '+ snh + ' -Q "BACKUP DATABASE [Pulsar Multimedia ('+instancia_sql+')] TO DISK='+ '\'' + 'C:\Pulsar\\' + bkp_pasta + '\BASE_PADRAO_%date:~-4,4%_%date:~-7,2%_%date:~-10,2%_%time:~0,2%_%time:~3,2%.bak'+'\'' + '"')
@@ -254,14 +292,14 @@ while final == 0:
 
         print('echo --- GERANDO ARQUIVO PARA RESTAURAR SQL ---\n')
         print('Qual a versão SQL que está sendo utilizada ?\n')
-        versao_sql = input ('Versão SQL utilizada: 14 - 12 - 8\nDigite a versão do SQL: ')
+        versao_sql = input ('Versão SQL utilizada: 14 - 12\nDigite a versão do SQL: ')
         print("----------------------------------LOGIN (TRAFFIC)----------------------------------")
         login_sql = input ("\nLOGIN DO USUÁRIO PADRAO (SUPORTE): ")
         senha_sql = input ("\nSENHA DO USUÁRIO PADRAO (1 AO 6): ")
         print('\n---------------------------------------------------------------------------------\n')
-        r2_vinheta = input ("Informe o endereço via rede das vinhetas (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\VINHETAS\nDigite o caminho: ")
-        r2_jorn = input ("\nInforme o endereço via rede do jornal (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\JORNAL\nDigite o caminho: ")
-        r2_com = input ("\nInforme o endereço via rede dos comerciais (Maquina reserva)\nExemplo: \\\\"+ hr + "\\PULSAR\\AUDIOS_PULSAR\\COMERCIAL\nDigite o caminho: ")
+        r2_vinheta = input ("Informe o endereço via rede das vinhetas (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\VINHETAS\nDigite o caminho: ")
+        r2_jorn = input ("\nInforme o endereço via rede do jornal (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\JORNAL\nDigite o caminho: ")
+        r2_com = input ("\nInforme o endereço via rede dos comerciais (Maquina reserva)\nExemplo: \\\\"+ hr + "\PULSAR\\AUDIOS_PULSAR\\COMERCIAL\nDigite o caminho: ")
         print('\n--------------------------------------------------------\n')
         linha_1 = ('USE master\n')
         linha_2 = ('\nALTER DATABASE [Pulsar Multimedia ('+instancia_sql+')] SET SINGLE_USER WITH ROLLBACK IMMEDIATE\n')
@@ -278,7 +316,7 @@ while final == 0:
         linha_13 = ('\nDirectory_7=\''+r2_vinheta+'\\\',\n')
         linha_14 = ('\nDirectory_8=\''+r2_jorn+'\\\',\n')
         linha_15 = ('\nDirectory_14=\''+r2_com+'\\\',\n')
-        linha_16 = ('\nEnable_Use_Setup_Traffic = 1 WHERE Cod_Station = \'1\';')
+        linha_16 = ('\nEnable_Use_Setup_Traffic = 1 WHERE Cod_Station = \''+ cod_station + '\';')
 
         sleep(2)
         
@@ -292,7 +330,27 @@ while final == 0:
         
         finalizar = input('Finalizar programa ?\n1. Finalizar\n2. Reiniciar\n')
         if finalizar == '1':
-            final = 1
+            verifica_pasta = os.path.exists('C:\Pulsar\script_pulsar')
+            if verifica_pasta == True:
+                sys.stdout = open("C:\Pulsar\script_pulsar\BACKUP_PULSAR.bat", "w")
+                print(comercial,
+                jornal,
+                musica,
+                vinheta,
+                horacerta,
+                informativo,
+                gravados,
+                bd,
+                sql_arqv,
+                sql2_arqv,
+                sql_copy,
+                sql_dell,
+                forfile,
+                restore)
+    
+                sys.stdout = open("C:\Pulsar\script_pulsar\RESTORE-PULSAR.sql", "w")
+                print(linha_1, linha_2, linha_3,linha_4, linha_5, linha_6, linha_7, linha_8, linha_9, linha_10, linha_11, linha_12, linha_13, linha_14, linha_15, linha_16)
+                final = 1
         if finalizar == '2':
             print('Aguarde!')
             sleep(2)
@@ -302,36 +360,16 @@ while final == 0:
       print('Finalizando!')
       sleep(1)
       exit()
-    try:
-        sys.stdout = open("C:\Pulsar\script_pulsar\BACKUP_PULSAR.bat", "w")
-        print(comercial,
-            jornal,
-            musica,
-            vinheta,
-            horacerta,
-            informativo,
-            gravados,
-            bd,
-            sql_arqv,
-            sql2_arqv,
-            sql_copy,
-            sql_dell,
-            forfile,
-            restore)
-    
-        sys.stdout = open("C:\Pulsar\script_pulsar\RESTORE-PULSAR.sql", "w")
-        print(linha_1, linha_2, linha_3,linha_4, linha_5, linha_6, linha_7, linha_8, linha_9, linha_10, linha_11, linha_12, linha_13, linha_14, linha_15, linha_16)
-
+    verifica_pastaLog = os.path.exists('C:\Pulsar\script_pulsar\log')
+    if verifica_pastaLog == False:
         directory = "log"
   
   
         parent_dir = "C:\Pulsar\script_pulsar\\"
-  
+
         path = os.path.join(parent_dir, directory)
         os.mkdir(path)
         sys.stdout.close()
-    except:
-        print("Nao foi possivel encontrar a pasta script_pulsar!\nCrie a pasta para que o script funcione corretamente")
-        print("Finalizando!")
-        sleep(4)
+    if verifica_pastaLog == True:
+        sleep(1)
         exit()
